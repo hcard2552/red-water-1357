@@ -1,0 +1,148 @@
+
+import random
+
+# prints the board state
+def printQueens(board):
+    dash = "-------"
+    for row in board:
+        print(dash * n)
+        
+        for col in range(0,n-1):
+            print("|  {0}  |".format(row[col][0]), end = "")
+        print("|  {0}  |".format(row[n-1][0]))
+        
+    print(dash * n)
+
+# creates some random initial state
+def randomizeBoard(board, queens):
+    for index in range(0, n):
+        randQueen = random.choice(range(0,n))
+        board[randQueen][index][0] = 1
+        queens[index] = randQueen
+
+# checks whether the board state is a valid state
+def isValid(board, queens):
+    # turns the queens list into a set
+    queenSet= set(queens)
+
+    #checks only one queen per row
+    if len(queenSet) < n:
+        return False
+
+    # checks the diagonals
+    for col in range(0,n):
+        if not checkDiagonals(board, queens, queens[col], col):
+            return False
+    return True
+
+# check whether the current position is in conflict with a queen via its diagonals
+def checkDiagonals(board, queens, row, col):
+    flag = True
+
+    for j in range(0, n):
+        i = queens[j]
+        
+        # skips if this is the passed in tile
+        if (i == row and j == col):
+            continue
+        else:
+            # south-east diagonal
+            if(row > i and col > j):
+                if(row - i == col - j):
+                    # these counters are used for the heuristic values
+                    board[row][col][1] += 1
+                    flag = False
+            # north-west diagonal
+            elif(row < i and col < j):
+                if(i - row == j - col):
+                    board[row][col][1] += 1
+                    flag = False
+            # south-west diagonal
+            elif(row < i and col > j):
+                if(i - row == col - j):
+                    board[row][col][1] += 1
+                    flag = False
+            # north-east diagonal
+            elif(row > i and col < j):
+                if(row - i == j - col):
+                    board[row][col][1] += 1
+                    flag = False
+    return flag
+
+# clears the heuristic values from the board so there is no overlap of values next time
+def clearValue(board):
+    for col in range(0, n):
+        for row in range(0, n):
+            board[row][col][1] = 0
+
+# finds the heuristic values
+def findValue(row, col, board, queens):
+    checkDiagonals(board, queens, row, col)
+
+    for j in range(0, n):
+        i = queens[j]
+
+        # same row
+        if i == row:
+            board[row][col][1] += 1
+
+# finds a solution state
+def solveQueens(board, queens):
+    numOfAttempts = 0
+
+    while(True):
+        clearValue(board)
+        if isValid(board, queens):
+            return False
+
+        else:
+            for col in range(0, n):
+                minVal = 5*n
+                minIndex = 0
+
+                for row in range(0, n):
+                    findValue(row, col, board, queens)
+
+                    if board[row][col][1] < minVal:
+                        minVal = board[row][col][1]
+                        minIndex = row
+                
+                tempPiece = board[minIndex][col]
+
+                board[minIndex][col] = board[queens[col]][col]
+                board[queens[col]][col] = tempPiece
+                queens[col] = minIndex
+
+            numOfAttempts += 1
+            # if a certain threshold of attempts is hit, randomize board state to help find solution
+            if numOfAttempts > n*2:
+                for col in range(0, n):
+                    newPos = random.choice(range(0,n))
+                    tempPos = board[newPos][col]
+
+                    board[newPos][col] = board[queens[col]][col]
+                    board[queens[col]][col] = tempPos
+                    queens[col] = newPos
+                numOfAttempts = 0
+
+
+
+global n
+n = int(input("\nHow many queens? "))
+
+board = [[ [0 for col in range(2)] for col in range(n)] for row in range(n)]
+
+queenRowPos = []
+for index in range(0,n):
+    queenRowPos.append(-1)
+
+randomizeBoard(board, queenRowPos)
+print("\nInitial State:")
+printQueens(board)
+
+
+solveQueens(board, queenRowPos)
+
+print("\nFinal State:")
+printQueens(board)
+print()
